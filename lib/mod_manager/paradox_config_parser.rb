@@ -81,7 +81,7 @@ module ModManager
       end
 
       def wrap_string_in_io(string)
-        if string.is_a? StringIO
+        if string.is_a?(StringIO) || string.is_a?(IO)
           string
         else
           StringIO.new string
