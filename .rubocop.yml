@@ -6,6 +6,9 @@ Metrics/BlockLength:
     - spec/**/*
     - ./*.gemspec
 
+Metrics/MethodLength:
+  Max: 20
+
 Lint/RaiseException:
   Enabled: true
 

@@ -4,7 +4,7 @@ module ModManager
   # Parse Paradox configuration files
   module ParadoxConfigParser
     class << self
-      def parse(string) # rubocop:disable Metrics/MethodLength
+      def parse(string)
         io = wrap_string_in_io(string)
 
         struct = nil
