@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'mod_manager/mod/base'
 require 'zip'
 require 'mod_manager/paradox_config_parser'
 require 'mod_manager/game'
@@ -7,11 +8,7 @@ require 'mod_manager/game'
 module ModManager
   module Mod
     # Mod in repo, not installed
-    class Repo
-      Game = Struct.new(:name, :version)
-
-      attr_reader :name, :game, :remote_file_id, :install_path, :tags
-
+    class Repo < Base
       def initialize(archive_path)
         @archive_path = archive_path
 
@@ -32,17 +29,6 @@ module ModManager
 
           assign_metadata metadata
         end
-      end
-
-      def assign_metadata(metadata)
-        @game = Game.new('Stellaris', metadata['supported_version'])
-
-        @name = metadata['name']
-        @tags = metadata['tags']
-
-        @remote_file_id = metadata['remote_file_id']
-
-        @install_path = Pathname.new(metadata['path'])
       end
     end
   end
