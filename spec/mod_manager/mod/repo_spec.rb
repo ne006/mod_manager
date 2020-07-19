@@ -1,5 +1,33 @@
 # frozen_string_literal: true
 
+RSpec.shared_examples 'succesful installation' do |mode, check_file_presence|
+  it 'should copy mod header to /mod' do
+    expect(File.exist?(Pathname.new(install_dir).join('mod', '1.mod'))).not_to be true if check_file_presence
+
+    subject.install(install_dir, mode: mode)
+
+    expect(File.exist?(Pathname.new(install_dir).join('mod', '1.mod'))).to be true
+  end
+
+  it 'should copy mod files to install install_path' do
+    if check_file_presence
+      %w[descriptor.mod thumbnail.png common/random_names/a_file.txt].each do |asset|
+        expect(File.exist?(asset_path.join(asset))).not_to be true
+      end
+    end
+
+    subject.install(install_dir, mode: mode)
+
+    %w[descriptor.mod thumbnail.png common/random_names/a_file.txt].each do |asset|
+      expect(File.exist?(asset_path.join(asset))).to be true
+    end
+  end
+
+  it 'should return :ok' do
+    expect(subject.install(install_dir, mode: mode)).to eql(:ok)
+  end
+end
+
 RSpec.describe ModManager::Mod::Repo do
   let(:mod_archive) { file_fixture('repo/2.7.1/1.zip') }
   let(:metadata_raw) do
@@ -55,23 +83,21 @@ RSpec.describe ModManager::Mod::Repo do
 
     after(:each) { FileUtils.rm_rf(install_dir, secure: true) }
 
-    it 'should copy mod header to /mod' do
-      expect(File.exist?(Pathname.new(install_dir).join('mod', '1.mod'))).not_to be true
-
-      subject.install(install_dir)
-
-      expect(File.exist?(Pathname.new(install_dir).join('mod', '1.mod'))).to be true
+    context 'when NO mod with the same remote file id is installed' do
+      include_examples 'succesful installation', :keep, true
     end
 
-    it 'should copy mod files to install install_path' do
-      %w[descriptor.mod thumbnail.png common/random_names/a_file.txt].each do |asset|
-        expect(File.exist?(asset_path.join(asset))).not_to be true
+    context 'when mod with the same remote file id is installed' do
+      before(:each) { subject.install(install_dir) }
+
+      context 'when mode :replace' do
+        include_examples 'succesful installation', :replace
       end
 
-      subject.install(install_dir)
-
-      %w[descriptor.mod thumbnail.png common/random_names/a_file.txt].each do |asset|
-        expect(File.exist?(asset_path.join(asset))).to be true
+      context 'when mode :keep' do
+        it 'should return :exists' do
+          expect(subject.install(install_dir, mode: :keep)).to eql(:exists)
+        end
       end
     end
   end

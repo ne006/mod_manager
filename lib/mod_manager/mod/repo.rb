@@ -19,8 +19,10 @@ module ModManager
         load_metadata
       end
 
-      def install(install_dir) # rubocop:disable Metrics/AbcSize
+      def install(install_dir, mode: :keep) # rubocop:disable Metrics/AbcSize
         config_dir_path, asset_dir_path = setup_dirs(install_dir)
+
+        return :exists if mode == :keep && installed?(config_dir_path)
 
         Zip::File.open(@archive_path) do |archive|
           archive.each do |entry|
@@ -33,9 +35,15 @@ module ModManager
             end
           end
         end
+
+        :ok
       end
 
       protected
+
+      def installed?(config_dir_path)
+        File.exist?(config_dir_path.join("#{remote_file_id}.mod"))
+      end
 
       def load_metadata
         Zip::File.open(@archive_path) do |archive|
