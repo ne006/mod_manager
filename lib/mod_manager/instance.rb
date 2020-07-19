@@ -2,6 +2,7 @@
 
 require 'mod_manager/mod/repo'
 require 'mod_manager/mod/game'
+require 'mod_manager/event'
 
 module ModManager
   # An instance of mod manager
@@ -30,6 +31,18 @@ module ModManager
       @game_mods = nil
 
       self
+    end
+
+    def install(mode: :keep, on_event: nil)
+      list(:repo).each do |mod|
+        on_event&.call(::ModManager::Event.new(:install_start, { mod: mod }))
+
+        result = mod.install(game_dir, mode: mode)
+
+        on_event&.call(Event.new(:install_end, { mod: mod, result: result }))
+      rescue StandardError => e
+        on_event&.call(Event.new(:install_end, { mod: mod, result: :error, exception: e }))
+      end
     end
 
     protected
