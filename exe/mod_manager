@@ -1,0 +1,6 @@
+#!/usr/bin/env ruby; ruby
+# frozen_string_literal: true
+
+require 'mod_manager'
+
+ModManager.cli

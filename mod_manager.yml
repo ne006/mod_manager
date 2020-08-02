@@ -1,0 +1,2 @@
+game_dir: <%= ENV['MM_GAME_DIR'] || STDERR.puts('Specify MM_GAME_DIR env variable') && exit(1) %>
+repo_dir: <%= ENV['MM_REPO_DIR'] || Dir.pwd %>
