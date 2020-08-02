@@ -52,6 +52,7 @@ module ModManager
           raise StandardError, "No .mod file found in archive #{@archive_path}" unless entry
 
           metadata = ParadoxConfigParser.parse(entry.get_input_stream.read)
+          metadata['remote_file_id'] ||= File.basename(entry.name, '.mod')
 
           assign_metadata metadata
         end

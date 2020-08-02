@@ -20,6 +20,7 @@ module ModManager
 
       def load_metadata
         metadata = ParadoxConfigParser.parse(File.new(@config_path))
+        metadata['remote_file_id'] ||= File.basename(@config_path, '.mod')
 
         assign_metadata metadata
       end
