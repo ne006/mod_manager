@@ -79,11 +79,15 @@ RSpec.describe ModManager::CLI do
         callback.call(ModManager::Event.new(:install_end, { mod: repo_mod1, result: :ok }))
         callback.call(ModManager::Event.new(:install_start, { mod: repo_mod2 }))
         callback.call(ModManager::Event.new(:install_end, { mod: repo_mod2, result: :ok }))
+        callback.call(ModManager::Event.new(:register_start, { mod: game_mod1 }))
+        callback.call(ModManager::Event.new(:register_end, { mod: game_mod1, result: :ok }))
       when :keep
         callback.call(ModManager::Event.new(:install_start, { mod: repo_mod1 }))
         callback.call(ModManager::Event.new(:install_end, { mod: repo_mod1, result: :exists }))
         callback.call(ModManager::Event.new(:install_start, { mod: repo_mod2 }))
         callback.call(ModManager::Event.new(:install_end, { mod: repo_mod2, result: :ok }))
+        callback.call(ModManager::Event.new(:register_start, { mod: game_mod1 }))
+        callback.call(ModManager::Event.new(:register_end, { mod: game_mod1, result: :ok }))
       end
     end
 
