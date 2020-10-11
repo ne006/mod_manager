@@ -42,6 +42,8 @@ module ModManager
         registry(registry_path).merge!(new_data)
 
         write_registry(registry_path)
+
+        :ok
       end
 
       def install_dir

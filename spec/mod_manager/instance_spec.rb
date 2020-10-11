@@ -1,10 +1,18 @@
 # frozen_string_literal: true
 
 RSpec.shared_examples 'event generation' do |cycles, executor|
-  it 'should generate :install_start and :install_end events' do
+  it 'should generate :install_start, :install_end events, :register_start and :register_end events' do
     catcher = proc {}
 
-    cycles.times do
+    if cycles.is_a?(Hash)
+      install_cycles = cycles.fetch(:install, 0)
+      register_cycles = cycles.fetch(:register, 0)
+    else
+      install_cycles = cycles
+      register_cycles = cycles
+    end
+
+    install_cycles.times do
       expect(catcher).to receive(:call) do |arg|
         expect(arg).to be_a(ModManager::Event)
         expect(arg.type).to eql(:install_start)
@@ -16,6 +24,21 @@ RSpec.shared_examples 'event generation' do |cycles, executor|
         expect(arg.type).to eql(:install_end)
         expect(arg.metadata[:mod]).not_to be_nil
         expect(arg.metadata[:result]).to eql(:ok).or eql(:exists)
+      end.once.ordered
+    end
+
+    register_cycles.times do
+      expect(catcher).to receive(:call) do |arg|
+        expect(arg).to be_a(ModManager::Event)
+        expect(arg.type).to eql(:register_start)
+        expect(arg.metadata[:mod]).not_to be_nil
+      end.once.ordered
+
+      expect(catcher).to receive(:call) do |arg|
+        expect(arg).to be_a(ModManager::Event)
+        expect(arg.type).to eql(:register_end)
+        expect(arg.metadata[:mod]).not_to be_nil
+        expect(arg.metadata[:result]).to eql(:ok)
       end.once.ordered
     end
 
@@ -90,9 +113,25 @@ RSpec.describe ModManager::Instance do
       game: stellaris26
     )
 
+    game_mod2 = double(
+      'ModManager::Mod::Game',
+      name: 'Mod 2',
+      tags: %w[
+        Overhaul
+        Gameplay
+      ],
+      remote_file_id: '2',
+      path: 'workshop/content/281990/2/',
+      game: stellaris27
+    )
+
     allow(game_mod_klass).to receive(:new)
       .with(Pathname.new(game_dir).join('mod/1.mod'))
       .and_return(game_mod1)
+
+    allow(game_mod_klass).to receive(:new)
+      .with(Pathname.new(game_dir).join('mod/2.mod'))
+      .and_return(game_mod2)
   end
 
   describe '#list' do
@@ -115,10 +154,19 @@ RSpec.describe ModManager::Instance do
         .map { |archive| ModManager::Mod::Repo.new(Pathname.new(repo_dir).join(archive)) }
     end
 
+    let(:game_mods) do
+      ['mod/1.mod', 'mod/2.mod']
+        .map { |config| ModManager::Mod::Game.new(Pathname.new(game_dir).join(config)) }
+    end
+
     context 'when mods are not installed' do
       before(:each) do
         mods.each do |mod|
           allow(mod).to receive(:install).and_return(:ok)
+        end
+
+        game_mods.each do |mod|
+          allow(mod).to receive(:register).and_return(:ok)
         end
       end
 
@@ -126,7 +174,7 @@ RSpec.describe ModManager::Instance do
         subject.install
       end)
 
-      include_examples 'event generation', 2, (proc do |catcher|
+      include_examples 'event generation', { install: 2, register: 1 }, (proc do |catcher|
         subject.install(on_event: catcher)
       end)
     end
@@ -138,13 +186,17 @@ RSpec.describe ModManager::Instance do
           allow(mod).to receive(:install).with(anything, mode: :keep).and_return(:exists)
         end
 
+        game_mods.each do |mod|
+          allow(mod).to receive(:register).and_return(:ok)
+        end
+
         %i[keep replace].each do |mode|
           context "mode :#{mode}" do
             include_examples 'mods installation', (proc do
               subject.install(mode: mode)
             end)
 
-            include_examples 'event generation', 2, (proc do |catcher|
+            include_examples 'event generation', { install: 2, register: 1 }, (proc do |catcher|
               subject.install(mode: mode, on_event: catcher)
             end)
           end

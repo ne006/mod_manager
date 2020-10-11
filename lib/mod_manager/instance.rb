@@ -43,6 +43,20 @@ module ModManager
       rescue StandardError => e
         on_event&.call(Event.new(:install_end, { mod: mod, result: :error, exception: e }))
       end
+
+      register on_event: on_event
+    end
+
+    def register(on_event: nil)
+      list(:game).each do |mod|
+        on_event&.call(::ModManager::Event.new(:register_start, { mod: mod }))
+
+        result = mod.register(registry_path)
+
+        on_event&.call(Event.new(:register_end, { mod: mod, result: result }))
+      rescue StandardError => e
+        on_event&.call(Event.new(:register_end, { mod: mod, result: :error, exception: e }))
+      end
     end
 
     protected
@@ -68,6 +82,10 @@ module ModManager
 
         list << Mod::Game.new(config_folder_path.join(entry))
       end
+    end
+
+    def registry_path
+      Pathname.new(game_dir).join('mods_registry.json')
     end
   end
 end
