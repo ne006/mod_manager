@@ -14,6 +14,8 @@ module ModManager
       def initialize(archive_path)
         @archive_path = archive_path
 
+        convert_archive_path_to_pathname
+
         raise ArgumentError, "File '#{@archive_path}' doesn't exist" unless File.exist?(@archive_path)
 
         load_metadata
@@ -40,6 +42,10 @@ module ModManager
       end
 
       protected
+
+      def convert_archive_path_to_pathname
+        @archive_path = Pathname.new(@archive_path) unless @archive_path.is_a?(Pathname)
+      end
 
       def installed?(config_dir_path)
         File.exist?(config_dir_path.join("#{remote_file_id}.mod"))
